@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zomato - Food Delivery & Dining</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    header {
+      background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80') center/cover;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .brand-title { font-size: 3.5rem; font-weight: 800; font-style: italic; margin-bottom: 12px; }
+    .brand-subtitle { font-size: 1.5rem; margin-bottom: 25px; }
+    .search-box {
+      display: flex;
+      width: 100%;
+      max-width: 650px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .search-box input {
+      flex: 1;
+      padding: 15px 20px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+    }
+    .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+    .heading { font-size: 1.8rem; margin-bottom: 25px; color: #1c1c1c; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+    .card { border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #f0f0f0; }
+    .card img { width: 100%; height: 200px; object-fit: cover; }
+    .card-body { padding: 16px; }
+    .card-title { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: 600; }
+    .rating { background: #24963f; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; }
+    .card-desc { color: #696969; margin-top: 8px; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand-title">zomato</div>
+    <div class="brand-subtitle">Discover the best food & drinks in your city</div>
+    <div class="search-box">
+      <input type="text" placeholder="Search for restaurant, cuisine, or a dish...">
+    </div>
+  </header>
+  <main class="container">
+    <h2 class="heading">Popular Collections</h2>
+    <div class="grid">
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" alt="Dining">
+        <div class="card-body">
+          <div class="card-title"><span>Bistro Royale</span><span class="rating">4.6 ★</span></div>
+          <p class="card-desc">North Indian, Continental • ₹1,200 for two</p>
+        </div>
+      </div>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80" alt="Cafe">
+        <div class="card-body">
+          <div class="card-title"><span>The Urban Cafe</span><span class="rating">4.3 ★</span></div>
+          <p class="card-desc">Desserts, Beverages, Fast Food • ₹600 for two</p>
+        </div>
+      </div>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80" alt="Pizza">
+        <div class="card-body">
+          <div class="card-title"><span>Pizzeria Bella</span><span class="rating">4.8 ★</span></div>
+          <p class="card-desc">Italian, Pizza • ₹900 for two</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
