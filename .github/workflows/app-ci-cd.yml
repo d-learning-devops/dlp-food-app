@@ -1,0 +1,64 @@
+name: Build and Deploy App
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'k8s/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_NAME: "zomatoclonecr"
+  CLUSTER_NAME: "zomatoclone-aks"
+  RESOURCE_GROUP: "zomatoclone-rg"
+  IMAGE_NAME: "zomato-ui"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build & Push Image to ACR
+        run: |
+          IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          az acr login --name ${{ env.ACR_NAME }}
+          docker build -t $IMAGE_TAG ./app
+          docker push $IMAGE_TAG
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v4
+        with:
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+
+      - name: Deploy to AKS
+        run: |
+          IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          kubectl apply -f k8s/namespace.yaml
+          
+          # Replace placeholder with current dynamic image tag
+          sed -i "s|IMAGE_PLACEHOLDER|$IMAGE_TAG|g" k8s/deployment.yaml
+          
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          
+          kubectl rollout status deployment/zomato-frontend -n zomato-app --timeout=180s
+
+      - name: Output Public IP
+        run: |
+          echo "Fetching LoadBalancer IP..."
+          kubectl get svc zomato-frontend-service -n zomato-app -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
