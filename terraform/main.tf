@@ -28,6 +28,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
   identity {
     type = "SystemAssigned"
   }
+
+  # Enables AKS Managed NGINX Ingress Routing
+  web_app_routing {
+    dns_zone_ids = []
+  }
 }
 
 # Role Assignment: AKS Kubelet Identity allowed to pull from ACR
