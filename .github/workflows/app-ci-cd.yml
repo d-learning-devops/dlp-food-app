@@ -50,11 +50,12 @@ jobs:
           IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
           kubectl apply -f k8s/namespace.yaml
           
-          # Replace placeholder with current dynamic image tag
+          # Replace placeholder with dynamic image tag
           sed -i "s|IMAGE_PLACEHOLDER|$IMAGE_TAG|g" k8s/deployment.yaml
           
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
           
           kubectl rollout status deployment/zomato-frontend -n zomato-app --timeout=180s
 
