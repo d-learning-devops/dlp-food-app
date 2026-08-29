@@ -1,11 +1,11 @@
 name: Build and Deploy App
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'app/**'
-      - 'k8s/**'
+  #push:
+    #branches: [ main ]
+    #paths:
+      #- 'app/**'
+      #- 'k8s/**'
   workflow_dispatch:
 
 permissions:
