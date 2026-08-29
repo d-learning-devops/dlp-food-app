@@ -4,7 +4,7 @@ metadata:
   name: zomato-frontend-service
   namespace: zomato-app
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: zomato-frontend
   ports:
