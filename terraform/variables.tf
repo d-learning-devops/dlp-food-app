@@ -21,3 +21,15 @@ variable "vm_size" {
   default     = "Standard_B2s"
   description = "VM SKU for the worker nodes"
 }
+
+variable "budget_amount" {
+  type        = number
+  default     = 120
+  description = "Total monthly budget limit in USD"
+}
+
+variable "alert_email_addresses" {
+  type        = list(string)
+  default     = ["your-email@example.com"]
+  description = "Email recipients for budget alert notifications"
+}
