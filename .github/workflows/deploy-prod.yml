@@ -1,0 +1,27 @@
+name: "Deploy API to ACR"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Select Environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+
+jobs:
+  trigger-build:
+    name: "Trigger Reusable Build"
+    # Calls the reusable workflow file
+    uses: ./.github/workflows/reusable-acr-build.yml
+    with:
+      # Passes the environment name dynamically
+      environment_name: ${{ inputs.target_env }}
+      registry_name: "mytestregistry12345"
+      image_name: "sample-nginx"
+    # Defers secret resolution to the reusable workflow
+    secrets: inherit
