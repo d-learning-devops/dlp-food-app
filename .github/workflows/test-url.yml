@@ -1,0 +1,66 @@
+name: "Test Environment URLs Injection"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Select the environment context to load"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+
+jobs:
+  test-url-secrets:
+    name: "Validate URL Secrets"
+    runs-on: ubuntu-latest
+    
+    # Binds the job to the selected environment to unlock its specific secrets
+    environment: ${{ inputs.target_environment }}
+    
+    steps:
+      - name: Initialize Log File
+        run: |
+          echo "=== Secret Test Initialization ===" > EXP_HD
+          echo "Target Environment: ${{ inputs.target_environment }}" >> EXP_HD
+          echo "--------------------------------" >> EXP_HD
+
+      - name: Validate app_url1
+        env:
+          APP_URL_1: ${{ secrets.app_url1 }}
+        run: |
+          if [[ -z "$APP_URL_1" ]]; then
+            echo "ERROR: app_url1 is empty or missing in the ${{ inputs.target_environment }} environment!" | tee -a EXP_HD
+          else
+            echo "SUCCESS: app_url1 loaded into the runner." >> EXP_HD
+            if [[ "$APP_URL_1" == *"vault.azure.net/secrets/"* ]]; then
+              echo "FORMAT OK: app_url1 matches Azure Key Vault structure." | tee -a EXP_HD
+            else
+              echo "WARNING: app_url1 is a standard URL. Do not use --secret-build-arg." | tee -a EXP_HD
+            fi
+          fi
+          echo "--------------------------------" >> EXP_HD
+
+      - name: Validate app_url2
+        env:
+          APP_URL_2: ${{ secrets.app_url2 }}
+        run: |
+          if [[ -z "$APP_URL_2" ]]; then
+            echo "ERROR: app_url2 is empty or missing in the ${{ inputs.target_environment }} environment!" | tee -a EXP_HD
+          else
+            echo "SUCCESS: app_url2 loaded into the runner." >> EXP_HD
+            if [[ "$APP_URL_2" == *"vault.azure.net/secrets/"* ]]; then
+              echo "FORMAT OK: app_url2 matches Azure Key Vault structure." | tee -a EXP_HD
+            else
+              echo "WARNING: app_url2 is a standard URL. Do not use --secret-build-arg." | tee -a EXP_HD
+            fi
+          fi
+          echo "--------------------------------" >> EXP_HD
+
+      - name: Output Test Results
+        run: |
+          echo "--- EXP_HD Log Contents ---"
+          cat EXP_HD
