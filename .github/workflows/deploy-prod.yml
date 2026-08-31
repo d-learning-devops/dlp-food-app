@@ -12,7 +12,10 @@ on:
           - dev
           - qa
           - prod
-
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   trigger-build:
     name: "Trigger Reusable Build"
