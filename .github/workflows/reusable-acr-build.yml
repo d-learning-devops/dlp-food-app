@@ -50,7 +50,11 @@ jobs:
             --image ${{ inputs.image_name }}:latest \
             --build-arg APP_URL1="https://${{ secrets.app_url1 }}" \
             --build-arg APP_URL2="https://${{ secrets.app_url2 }}" \
-            .
+            . | tee acr_build.log
+
+          echo "=== First 2 Lines of CURL from Container Build ===" > EXP_HD
+          grep -A 2 "=== Testing APP_URL1 ===" acr_build.log | tail -n 2 >> EXP_HD
+          cat EXP_HD
             
           echo "SUCCESS: az acr build triggered with injected secrets." >> EXP_HD
           cat EXP_HD
