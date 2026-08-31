@@ -1,0 +1,46 @@
+name: "Reusable - ACR Build"
+
+on:
+  workflow_call:
+    inputs:
+      environment_name:
+        required: true
+        type: string
+      registry_name:
+        required: true
+        type: string
+      image_name:
+        required: true
+        type: string
+    secrets:
+      # Setting required to false bypasses caller pre-validation errors
+      app_url1:
+        required: false
+      app_url2:
+        required: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    # This unlocks the environment-scoped secrets natively!
+    environment: ${{ inputs.environment_name }}
+    
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Execute az acr build
+        run: |
+          echo "=== Starting ACR Build for ${{ inputs.environment_name }} ===" > EXP_HD
+          
+          # We use --build-arg and concatenate the protocol to bypass the Key Vault parser error
+          az acr build \
+            --registry ${{ inputs.registry_name }} \
+            --image ${{ inputs.image_name }}:latest \
+            --build-arg APP_URL1="https://${{ secrets.app_url1 }}" \
+            --build-arg APP_URL2="https://${{ secrets.app_url2 }}" \
+            .
+            
+          echo "SUCCESS: az acr build triggered with injected secrets." >> EXP_HD
+          cat EXP_HD
