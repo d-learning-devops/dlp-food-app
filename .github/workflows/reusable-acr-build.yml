@@ -25,6 +25,9 @@ jobs:
     
     # This unlocks the environment-scoped secrets natively!
     environment: ${{ inputs.environment_name }}
+    permissions:
+      id-token: write
+      contents: read
     
     steps:
       - name: Checkout source code
