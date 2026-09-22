@@ -34,7 +34,7 @@ jobs:
       - name: Log in to Azure via ACA Managed Identity
         run: |
           echo "Authenticating using Container App user-assigned identity..."
-          az login --identity
+          az login
 
       - name: Fetch and Verify URLs from Azure Key Vault
         id: fetch-urls
