@@ -1,0 +1,98 @@
+name: "ACR Build and ACA Deploy"
+
+on:
+#  push:
+#    branches:
+#      - main
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP: "rg-aca-cicd-demo"
+  KEYVAULT_NAME: "kv-demo-17076"   # e.g. kv-demo-1234
+  ACR_NAME: "acrdemo17076"               # e.g. acrdemo1234
+  CAE_NAME: "cae-runners"
+  DEPLOYED_APP: "gh-runner-app"
+  IMAGE_NAME: "gh-runner-app-v1"
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, container-app]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure via ACA Managed Identity
+        run: |
+          echo "Authenticating using Container App user-assigned identity..."
+          az login --identity
+
+      - name: Fetch and Verify URLs from Azure Key Vault
+        id: fetch-urls
+        run: |
+          echo "Fetching secrets from Key Vault..."
+          URL1_VAL=$(az keyvault secret show --vault-name "${{ env.KEYVAULT_NAME }}" --name "url1" --query "value" -o tsv)
+          URL2_VAL=$(az keyvault secret show --vault-name "${{ env.KEYVAULT_NAME }}" --name "url2" --query "value" -o tsv)
+
+          # Verify neither is empty
+          if [[ -z "$URL1_VAL" || -z "$URL2_VAL" ]]; then
+            echo "::error::One or both Key Vault secrets could not be retrieved."
+            exit 1
+          fi
+
+          echo "Successfully retrieved url1: $URL1_VAL"
+          echo "Successfully retrieved url2: $URL2_VAL"
+
+          # Mask secret values in runner logs
+          echo "::add-mask::$URL1_VAL"
+          echo "::add-mask::$URL2_VAL"
+
+          echo "URL1=$URL1_VAL" >> $GITHUB_ENV
+          echo "URL2=$URL2_VAL" >> $GITHUB_ENV
+
+      - name: Execute az acr build
+        run: |
+          echo "=== Starting Cloud Build via az acr build ==="
+          az acr build \
+            --registry "${{ env.ACR_NAME }}" \
+            --image "${{ env.IMAGE_NAME }}:${{ github.sha }}" \
+            --image "${{ env.IMAGE_NAME }}:latest" \
+            --build-arg URL1="${{ env.URL1 }}" \
+            --build-arg URL2="${{ env.URL2 }}" \
+            .
+
+      - name: Deploy or Update Target Container App
+        run: |
+          IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "Deploying image: $IMAGE_TAG"
+
+          if az containerapp show --name "${{ env.DEPLOYED_APP }}" --resource-group "${{ env.RESOURCE_GROUP }}" >/dev/null 2>&1; then
+            echo "Updating existing Container App..."
+            az containerapp update \
+              --name "${{ env.DEPLOYED_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --image "$IMAGE_TAG"
+          else
+            echo "Creating target Container App..."
+            az containerapp create \
+              --name "${{ env.DEPLOYED_APP }}" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --environment "${{ env.CAE_NAME }}" \
+              --image "$IMAGE_TAG" \
+              --target-port 80 \
+              --ingress external
+          fi
+
+      - name: Verify Target App Status
+        run: |
+          STATE=$(az containerapp show \
+            --name "${{ env.DEPLOYED_APP }}" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query "properties.provisioningState" -o tsv)
+          
+          echo "Provisioning State: $STATE"
+          if [[ "$STATE" != "Succeeded" ]]; then
+            echo "Deployment verification failed!"
+            exit 1
+          fi
+          echo "Deployment completed and verified successfully."
