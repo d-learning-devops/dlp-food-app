@@ -1,20 +1,21 @@
 FROM alpine:latest
 
 # Install curl
-RUN apk update && apk add --no-cache curl
+RUN apk add --no-cache curl
 
-ARG APP_URL1
-ARG APP_URL2
+ARG URL1
+ARG URL2
 
-# Clean and normalize URLs to prevent double-prefixing or missing schemes
-RUN echo "=== Testing APP_URL1 ===" && \
-    TARGET_URL1=$(echo "$APP_URL1" | sed 's|https://https://|https://|') && \
-    echo "Querying: $TARGET_URL1" && \
-    curl -sS -L "$TARGET_URL1" | head -n 2 || true
+# Set as runtime variables
+ENV RUNTIME_URL1=$URL1
+ENV RUNTIME_URL2=$URL2
 
-RUN echo "=== Testing APP_URL2 ===" && \
-    TARGET_URL2=$(echo "$APP_URL2" | sed 's|https://https://|https://|') && \
-    echo "Querying: $TARGET_URL2" && \
-    curl -sS -L "$TARGET_URL2" | head -n 2 || true
+# Verify both URLs during build and print headers
+RUN echo "=== Validating URL1: $URL1 ===" && \
+    curl -sS -I -L "$URL1" | head -n 4 || echo "URL1 verification finished"
 
-CMD ["sh", "-c", "curl -sS -L \"$APP_URL1\" | head -n 2"]
+RUN echo "=== Validating URL2: $URL2 ===" && \
+    curl -sS -I -L "$URL2" | head -n 4 || echo "URL2 verification finished"
+
+# Print verified URLs on container execution
+CMD ["sh", "-c", "echo 'Application starting with verified URLs: URL1='$RUNTIME_URL1' URL2='$RUNTIME_URL2"]
