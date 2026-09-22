@@ -11,8 +11,8 @@ env:
   KEYVAULT_NAME: "kv-demo-17076"   # e.g. kv-demo-1234
   ACR_NAME: "acrdemo17076"               # e.g. acrdemo1234
   CAE_NAME: "cae-runners"
-  DEPLOYED_APP: "gh-runner-app"
-  IMAGE_NAME: "gh-runner-app-v1"
+  DEPLOYED_APP: "gh-web-app"
+  IMAGE_NAME: "gh-web-app-v1"
 
 jobs:
   build-and-deploy:
