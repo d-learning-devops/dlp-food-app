@@ -74,7 +74,13 @@ jobs:
         run: |
           IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
           echo "Deploying image: $IMAGE_TAG"
-
+          # 1. Get User-Assigned Identity Resource ID
+          UAI_RESOURCE_ID=$(az identity show \
+            --name "uai-gh-runner" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query "id" -o tsv)
+            
+          # 2. Create or Update Container App with Registry Credentials
           if az containerapp show --name "${{ env.DEPLOYED_APP }}" --resource-group "${{ env.RESOURCE_GROUP }}" >/dev/null 2>&1; then
             echo "Updating existing Container App..."
             az containerapp update \
