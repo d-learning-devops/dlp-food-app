@@ -74,26 +74,43 @@ jobs:
         run: |
           IMAGE_TAG="${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
           echo "Deploying image: $IMAGE_TAG"
-          # 1. Get User-Assigned Identity Resource ID
+          # 1. Fetch the exact Resource ID of your User-Assigned Identity
           UAI_RESOURCE_ID=$(az identity show \
             --name "uai-gh-runner" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
-            --query "id" -o tsv)
-            
-          # 2. Create or Update Container App with Registry Credentials
-          if az containerapp show --name "${{ env.DEPLOYED_APP }}" --resource-group "${{ env.RESOURCE_GROUP }}" >/dev/null 2>&1; then
+            --query "id" \
+            -o tsv)
+          
+          # 2. Deploy or Update
+          if az containerapp show --name "gh-web-app" --resource-group "${{ env.RESOURCE_GROUP }}" >/dev/null 2>&1; then
             echo "Updating existing Container App..."
+            
+            # Ensure identity and registry server settings are attached
+            az containerapp identity assign \
+              --name "gh-web-app" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --user-assigned "$UAI_RESOURCE_ID"
+          
+            az containerapp registry set \
+              --name "gh-web-app" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --server "${{ env.ACR_NAME }}.azurecr.io" \
+              --identity "$UAI_RESOURCE_ID"
+          
             az containerapp update \
-              --name "${{ env.DEPLOYED_APP }}" \
+              --name "gh-web-app" \
               --resource-group "${{ env.RESOURCE_GROUP }}" \
               --image "$IMAGE_TAG"
           else
-            echo "Creating target Container App..."
+            echo "Creating target Container App with ACR credentials..."
             az containerapp create \
-              --name "${{ env.DEPLOYED_APP }}" \
+              --name "gh-web-app" \
               --resource-group "${{ env.RESOURCE_GROUP }}" \
               --environment "${{ env.CAE_NAME }}" \
               --image "$IMAGE_TAG" \
+              --user-assigned "$UAI_RESOURCE_ID" \
+              --registry-server "${{ env.ACR_NAME }}.azurecr.io" \
+              --registry-identity "$UAI_RESOURCE_ID" \
               --target-port 80 \
               --ingress external
           fi
